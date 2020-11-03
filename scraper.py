@@ -135,3 +135,61 @@ def same_max(common,lst):
             lst = lst[:com-count]  #removes pages from com to com-count
             count = 0
     return lst
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_page_tokens(current_url):
+    res = requests.get(current_url)
+    html_page = res.text
+    soup = bs(html_page, 'lxml')
+    text = soup.find_all(text=True)
+
+    content = ''
+    black_list = [
+    '[document]',
+    'noscript',
+    'header',
+    'html',
+    'meta',
+    'head', 
+    'input',
+    'script',
+    ]
+    for token in text:
+        if token.parent.name not in black_list:
+            content += '{} '.format(token)
+    
+    tokens = computeWordFrequencies(content)
+    return tokens
+
+def computeWordFrequencies(token):
+    toke = []
+    count = []
+    def freq(tok):
+        return (tok,count[toke.index(tok)])
+    for t in range(len(token)):
+        if token[t] not in toke:
+            toke.append(token[t])
+            count.append(1)
+        else:
+            count[toke.index(token[t])]+=1
+    return tuple(map(freq,toke))
+
+
