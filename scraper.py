@@ -17,19 +17,18 @@ def extract_next_links(url, resp):
         new_pages = []
         if 'http' not in url:
             url = get_complete_url_scheme(url)
-        get_unique_url(url)
         response = requests.get(url)
         source_code = response.text
         soup_object = bs(source_code,'lxml')
         for link in soup_object.find_all('a'):
             current_link = link.get('href')
             current_link = urldefrag(current_link).url
-            if current_link != '':
+            if len(current_link)>2:
                 if current_link[0] == "/" and current_link[1].isalnum(): #adding root and scheme since it's missing
                     current_link = get_complete_url_scheme_root(current_link,url)
                 elif 'http' not in current_link:
                     current_link = get_complete_url_scheme(current_link)
-                if get_unique_url(current_link) and check_dead_pages(current_link):
+                if check_dead_pages(current_link) and is_valid(current_link) and get_unique_url(current_link):
                     new_pages.append(current_link)
     return new_pages
 
@@ -91,12 +90,17 @@ def check_dead_pages(current_url):
     return False
 
 def get_unique_url(url):
-    url_file = open("unique_url.txt", "w+")
-    lines = url_file.readlines()
+    url_file = open("unique_url.txt", "a+")
+    url_file.seek(0)
+    lines = url_file.read().strip(" ").split("\n")
+    if lines == ['']:
+        url_file.write(url)
+        return True
     lines.sort()
     common = common_stuff(lines)
     lines = same_max(common, lines)
-    blocked_urls = open("blocked.txt", "w+")
+    blocked_urls = open("blocked.txt", "a+")
+    blocked_urls.seek(0)
     lines2 = blocked_urls.readlines()
     blocked_urls.close()
     lines2.sort()
@@ -107,7 +111,7 @@ def get_unique_url(url):
         if url_blocked in url:
             temp = True
     if url not in lines and temp == False:
-        url_file.write(url)
+        url_file.write('\n'+ url)
         return True
     else:
         return False
@@ -117,8 +121,11 @@ def common_stuff(lst):
     common = []
     for urls in range(len(lst)-1):
         for l in range(min(len(lst[urls]), len(lst[urls+1]))):
-            if lst[urls][l] == lst[urls+1][l]:
-                common[urls] += lst[urls][l]
+            try:
+                if lst[urls][l] == lst[urls+1][l]:
+                    common[urls] += lst[urls][l]
+            except IndexError:
+                pass
     return common
 
 def same_max(common,lst):
@@ -129,67 +136,13 @@ def same_max(common,lst):
         else:
             count = 0
         if count >= 9:
-            blocked_urls = open("blocked.txt","w+")
-            blocked_urls.write(lst[com])
-            blocked_urls.close()
-            lst = lst[:com-count]  #removes pages from com to com-count
-            count = 0
+            blocked_urls = open("blocked.txt","a+")
+            if blocked_urls.read().strip(" ").split("\n")==['']:
+                blocked_urls.write(lst[com])
+                blocked_urls.close()
+            else:
+                blocked_urls.write("\n"+lst[com])
+                blocked_urls.close()
+                lst = lst[:com-count]  #removes pages from com to com-count
+                count = 0
     return lst
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def get_page_tokens(current_url):
-    res = requests.get(current_url)
-    html_page = res.text
-    soup = bs(html_page, 'lxml')
-    text = soup.find_all(text=True)
-
-    content = ''
-    black_list = [
-    '[document]',
-    'noscript',
-    'header',
-    'html',
-    'meta',
-    'head', 
-    'input',
-    'script',
-    ]
-    for token in text:
-        if token.parent.name not in black_list:
-            content += '{} '.format(token)
-    
-    tokens = computeWordFrequencies(content)
-    return tokens
-
-def computeWordFrequencies(token):
-    toke = []
-    count = []
-    def freq(tok):
-        return (tok,count[toke.index(tok)])
-    for t in range(len(token)):
-        if token[t] not in toke:
-            toke.append(token[t])
-            count.append(1)
-        else:
-            count[toke.index(token[t])]+=1
-    return tuple(map(freq,toke))
-
-
