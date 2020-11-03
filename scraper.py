@@ -177,9 +177,9 @@ def get_page_tokens(current_url):
     temp_lines = lines
     for token in tokens:
         if token[0] in full_line:
-            for line in lines:
-                if line.strip("\n").split(" ")[0] == token[0]:
-                    temp_lines[lines.index(token[0])] = token[0]+" "+str(token[1]+temp_lines[lines.index(token[0])].split(" ")[1])
+            for line in range(len(lines)):
+                if lines[line].strip("\n").split(" ")[0] == token[0]:
+                    temp_lines[line] = token[0]+" "+str(token[1]+temp_lines[line].split(" ")[1])
         else:
             temp_lines.append(token[0]+" "+token[1])
     for line in temp_lines:
