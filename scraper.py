@@ -88,6 +88,29 @@ def check_dead_pages(current_url):
         pass
     return False
 
+def get_page_tokens(current_url):
+    res = requests.get(current_url)
+    html_page = res.text
+    soup = bs(html_page, 'lxml')
+    text = soup.find_all(text=True)
+
+    content = ''
+    black_list = [
+    '[document]',
+    'noscript',
+    'header',
+    'html',
+    'meta',
+    'head', 
+    'input',
+    'script',
+    ]
+    for token in text:
+        if token.parent.name not in black_list:
+            content += '{} '.format(token)
+    tokens = re.findall('[a-z0-9]+',content.lower())
+    return tokens
+
 
 
 
