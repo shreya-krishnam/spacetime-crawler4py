@@ -14,9 +14,10 @@ def scraper(url, resp):
 def extract_next_links(url, resp):
     # Implementation requred.
     if is_valid(url):
-        visited_pages = []
+        new_pages = []
         if 'http' not in url:
             url = get_complete_url_scheme(url)
+        get_unique_url(url)
         response = requests.get(url)
         source_code = response.text
         soup_object = bs(source_code,'lxml')
@@ -28,9 +29,9 @@ def extract_next_links(url, resp):
                     current_link = get_complete_url_scheme_root(current_link,url)
                 elif 'http' not in current_link:
                     current_link = get_complete_url_scheme(current_link)
-                if current_link not in visited_pages and check_dead_pages(current_link):
-                    visited_pages.append(current_link)
-    return visited_pages
+                if get_unique_url(current_link) and check_dead_pages(current_link):
+                    new_pages.append(current_link)
+    return new_pages
 
 def is_valid(url):
     #implement error codes
