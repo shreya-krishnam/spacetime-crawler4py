@@ -169,18 +169,20 @@ def get_page_tokens(current_url):
             content += '{} '.format(token)
     tokens = computeWordFrequencies(content)
     tok_file = open("unique_toke.txt", "w+")
+    tok_file.seek(0)
     lines = tok_file.readlines()
     full_line  = " "
     for line in lines:
-        full_line += line
+        full_line += line.strip("\n").split(" ")[0]+" "
+    temp_lines = lines
     for token in tokens:
         if token[0] in full_line:
             for line in lines:
                 if line.strip("\n").split(" ")[0] == token[0]:
-                    line[1] += token[1]
+                    temp_lines[lines.index(token[0])] = token[0]+" "+str(token[1]+temp_lines[lines.index(token[0])].split(" ")[1])
         else:
-            lines.append(token[0]+" "+token[1])
-    for line in lines:
+            temp_lines.append(token[0]+" "+token[1])
+    for line in temp_lines:
         tok_file.seek(0)
         tok_file.write(line[0]+" "+line[1] +"\n")
     tok_file.close()
