@@ -23,8 +23,8 @@ def extract_next_links(url, resp):
         for link in soup_object.find_all('a'):
             current_link = link.get('href')
             current_link = urldefrag(current_link).url
-            if current_link!='':
-                if current_link[0]=="/" and current_link[1].isalnum(): #adding root and scheme since it's missing
+            if current_link != '':
+                if current_link[0] == "/" and current_link[1].isalnum(): #adding root and scheme since it's missing
                     current_link = get_complete_url_scheme_root(current_link,url)
                 elif 'http' not in current_link:
                     current_link = get_complete_url_scheme(current_link)
@@ -57,11 +57,11 @@ def is_valid(url):
         raise
 
 def check_valid_domain(parsed):
-    possible_domains = ['ics.uci.edu','cs.uci.edu','informatics.uci.edu','stat.uci.edu','today.uci.edu']
+    possible_domains = ['ics.uci.edu', 'cs.uci.edu', 'informatics.uci.edu', 'stat.uci.edu', 'today.uci.edu']
     possible_paths = ["*","*","*","*","department/information_computer_sciences/"]
     length_of_domain = len(parsed.netloc.split("."))
     for d in possible_domains:
-        if length_of_domain==3 and parsed.netloc.lower() == possible_domains[-1] and possible_paths[-1] in parsed.path.lower():
+        if length_of_domain == 3 and parsed.netloc.lower() == possible_domains[-1] and possible_paths[-1] in parsed.path.lower():
             return True
         elif parsed.netloc != possible_domains[-1] and d in parsed.netloc.lower():
             return True
@@ -70,55 +70,67 @@ def check_valid_domain(parsed):
 def get_complete_url_scheme_root(current_link,url):
     try:
         parsed = urlparse(url)
-        return 'https://'+parsed.netloc+current_link
+        return 'https://' + parsed.netloc + current_link
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 def get_complete_url_scheme(current_link):
-    if current_link[0:2]=="//":
-        return "https:"+current_link
-    return "https://"+current_link
+    if current_link[0:2] == "//":
+        return "https:" + current_link
+    return "https://" + current_link
 
 def check_dead_pages(current_url):
     try:
         response = requests.get(current_url)
-        if response.status_code==200 and response.text!='':
+        if response.status_code == 200 and response.text != '':
            return True
     except:
         pass
     return False
 
-def get_page_tokens(current_url):
-    res = requests.get(current_url)
-    html_page = res.text
-    soup = bs(html_page, 'lxml')
-    text = soup.find_all(text=True)
+def get_unique_url(url):
+    url_file = open("unique_url.txt", "w+")
+    lines = url_file.readlines()
+    lines.sort()
+    common = common_stuff(lines)
+    lines = same_max(common, lines)
+    blocked_urls = open("blocked.txt", "w+")
+    lines2 = blocked_urls.readlines()
+    blocked_urls.close()
+    lines2.sort()
+    block_comm = common_stuff(lines2)
+    lines2 = same_max(block_comm, lines2)
+    temp = False
+    for url_blocked in lines2:
+        if url_blocked in url:
+            temp = True
+    if url not in lines and temp == False:
+        url_file.write(url)
+        return True
+    else:
+        return False
+    url_file.close()
 
-    content = ''
-    black_list = [
-    '[document]',
-    'noscript',
-    'header',
-    'html',
-    'meta',
-    'head', 
-    'input',
-    'script',
-    ]
-    for token in text:
-        if token.parent.name not in black_list:
-            content += '{} '.format(token)
-    tokens = re.findall('[a-z0-9]+',content.lower())
-    return tokens
+def common_stuff(lst):
+    common = []
+    for urls in range(len(lst)-1):
+        for l in range(min(len(lst[urls]), len(lst[urls+1]))):
+            if lst[urls][l] == lst[urls+1][l]:
+                common[urls] += lst[urls][l]
+    return common
 
-
-
-
-
-
-
-
-        
-
-
-    
+def same_max(common,lst):
+    count = 0
+    for com in range(len(common)-1):
+        if common[com] == common[com+1]:
+            count += 1
+        else:
+            count = 0
+        if count >= 9:
+            blocked_urls = open("blocked.txt","w+")
+            blocked_urls.write(lst[com])
+            blocked_urls.close()
+            lst = lst[:com-count]  #removes pages from com to com-count
+            count = 0
+    return lst
