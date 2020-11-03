@@ -146,3 +146,58 @@ def same_max(common,lst):
                 lst = lst[:com-count]  #removes pages from com to com-count
                 count = 0
     return lst
+
+
+def get_page_tokens(current_url):
+    res = requests.get(current_url)
+    html_page = res.text
+    soup = bs(html_page, 'lxml')
+    text = soup.find_all(text=True)
+    content = ''
+    black_list = [
+    '[document]',
+    'noscript',
+    'header',
+    'html',
+    'meta',
+    'head', 
+    'input',
+    'script',
+    ]
+    for token in text:
+        if token.parent.name not in black_list:
+            content += '{} '.format(token)
+    tokens = computeWordFrequencies(content)
+    tok_file = open("unique_toke.txt", "w+")
+    lines = tok_file.readlines()
+    full_line  = " "
+    for line in lines:
+        full_line += line
+    for token in tokens:
+        if token[0] in full_line:
+            for line in lines:
+                if line.strip("\n").split(" ")[0] == token[0]:
+                    line[1] += token[1]
+        else:
+            lines.append(token[0]+" "+token[1])
+    for line in lines:
+        tok_file.seek(0)
+        tok_file.write(line[0]+" "+line[1] +"\n")
+    tok_file.close()
+    return tokens
+
+def computeWordFrequencies(token):
+    toke = []
+    count = []
+    def freq(tok):
+        return (tok,count[toke.index(tok)])
+    for t in range(len(token)):
+        if token[t] not in toke:
+            toke.append(token[t])
+            count.append(1)
+        else:
+            count[toke.index(token[t])]+=1
+    return tuple(map(freq,toke))
+
+
+
