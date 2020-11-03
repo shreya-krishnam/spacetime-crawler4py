@@ -4,6 +4,7 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup as bs 
 from urllib.parse import urlparse
 from urllib.parse import urldefrag
+from nltk.corpus import stopwords
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -13,7 +14,7 @@ def scraper(url, resp):
 
 def extract_next_links(url, resp):
     # Implementation requred.
-    if is_valid(url):
+    if is_valid(url) and check_low_high_content(url):
         new_pages = []
         if 'http' not in url:
             url = get_complete_url_scheme(url)
@@ -28,7 +29,7 @@ def extract_next_links(url, resp):
                     current_link = get_complete_url_scheme_root(current_link,url)
                 elif 'http' not in current_link:
                     current_link = get_complete_url_scheme(current_link)
-                if check_dead_pages(current_link) and is_valid(current_link) and get_unique_url(current_link):
+                if check_dead_pages(current_link) and is_valid(current_link) and check_low_high_content(current_link) and get_unique_url(current_link):
                     new_pages.append(current_link)
     return new_pages
 
@@ -46,7 +47,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|@)$", parsed.path.lower()):
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
             return False
         if check_valid_domain(parsed):
             return True
@@ -201,5 +202,30 @@ def computeWordFrequencies(token):
             count[toke.index(token[t])]+=1
     return tuple(map(freq,toke))
 
+def check_low_high_content(current_link):
+    res = requests.get(current_link)
+    html_page = res.text
+    soup = bs(html_page, 'lxml')
+    text = soup.find_all(text=True)
 
+    content = ''
+    blacklist = [
+        '[document]',
+        'noscript',
+        'header',
+        'html',
+        'meta',
+        'head', 
+        'input',
+        'script',
+    ]
+    for t in text:
+        if t.parent.name not in blacklist:
+            content += '{} '.format(t)
+    tokens = re.findall('[a-z0-9]+',content.lower())
+    stop_words = set(stopwords.words('english'))
+    tokens = [w for w in tokens if not w in stop_words]
+    if 300<=len(tokens)<=3000:
+        return True
+    return False
 
