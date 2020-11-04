@@ -191,8 +191,21 @@ def get_page_tokens(current_url):
     max_tokens_so_far = max_token.readlines()
     if max_tokens_so_far<len(content):
         max_token.seek(0)
-        max_token.write(len(content)
+        max_token.write(len(content))
     return tokens
+
+def fifty_most_common():
+    tok_file = open("unique_toke.txt", "r")
+    lines = tok_file.readlines()
+    tok_file.close()
+    list_tup_token = []
+    for line in lines:
+        list_tup_token.append(tuple(line.split(" ")[0],line.split(" ")[1]))
+    list_tup_token.sort(key=lambda x: x[1])
+    top_50 = open("top_fifty.txt","w")
+    for i in range(50):
+        top_50.write(list_tup_token[i])
+    
 
 def computeWordFrequencies(token):
     toke = []
