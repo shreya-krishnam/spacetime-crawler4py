@@ -187,6 +187,11 @@ def get_page_tokens(current_url):
         tok_file.seek(0)
         tok_file.write(line[0]+" "+line[1] +"\n")
     tok_file.close()
+    max_token = open("max_token.txt","w+")
+    max_tokens_so_far = max_token.readlines()
+    if max_tokens_so_far<len(content):
+        max_token.seek(0)
+        max_token.write(len(content)
     return tokens
 
 def computeWordFrequencies(token):
