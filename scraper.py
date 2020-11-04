@@ -204,8 +204,9 @@ def fifty_most_common():
         list_tup_token.append(tuple(line.split(" ")[0],line.split(" ")[1]))
     list_tup_token.sort(key=lambda x: x[1])
     top_50 = open("top_fifty.txt","w")
-    for i in range(50):
-        top_50.write(list_tup_token[i])
+    if len(list_tup_token)>50:
+        for i in range(50):
+            top_50.write(list_tup_token[i])
     
 
 def computeWordFrequencies(token):
