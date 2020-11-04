@@ -192,6 +192,7 @@ def get_page_tokens(current_url):
     if max_tokens_so_far<len(content):
         max_token.seek(0)
         max_token.write(len(content))
+    fifty_most_common()
     return tokens
 
 def fifty_most_common():
