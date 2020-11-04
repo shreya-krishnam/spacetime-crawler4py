@@ -13,13 +13,11 @@ def scraper(url, resp):
     return new_links
 
 def extract_next_links(url, resp):
-    # Implementation requred.
-    if is_valid(url) and check_low_high_content(url):
+    if resp.status_code==200 and is_valid(url) and check_low_high_content(resp.raw_response):
         new_pages = []
         if 'http' not in url:
             url = get_complete_url_scheme(url)
-        response = requests.get(url)
-        source_code = response.text
+        source_code = resp.content
         soup_object = bs(source_code,'lxml')
         for link in soup_object.find_all('a'):
             current_link = link.get('href')
@@ -29,8 +27,13 @@ def extract_next_links(url, resp):
                     current_link = get_complete_url_scheme_root(current_link,url)
                 elif 'http' not in current_link:
                     current_link = get_complete_url_scheme(current_link)
-                if check_dead_pages(current_link) and is_valid(current_link) and check_low_high_content(current_link) and get_unique_url(current_link):
-                    new_pages.append(current_link)
+                try:
+                    res = requests.get(current_link)
+                except:
+                    pass
+                else:
+                    if check_dead_pages(res) and is_valid(current_link) and check_low_high_content(res) and get_unique_url(current_link):
+                        new_pages.append(current_link)
     return new_pages
 
 def is_valid(url):
@@ -81,13 +84,9 @@ def get_complete_url_scheme(current_link):
         return "https:" + current_link
     return "https://" + current_link
 
-def check_dead_pages(current_url):
-    try:
-        response = requests.get(current_url)
-        if response.status_code == 200 and response.text != '':
-           return True
-    except:
-        pass
+def check_dead_pages(response):
+    if response.status_code == 200 and response.text != '':
+        return True
     return False
 
 def get_unique_url(url):
@@ -222,8 +221,7 @@ def computeWordFrequencies(token):
             count[toke.index(token[t])]+=1
     return tuple(map(freq,toke))
 
-def check_low_high_content(current_link):
-    res = requests.get(current_link)
+def check_low_high_content(res):
     html_page = res.text
     soup = bs(html_page, 'lxml')
     text = soup.find_all(text=True)
