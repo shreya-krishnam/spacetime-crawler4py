@@ -34,6 +34,8 @@ def extract_next_links(url, resp):
                 else:
                     if check_dead_pages(res) and is_valid(current_link) and check_low_high_content(res) and get_unique_url(current_link):
                         new_pages.append(current_link)
+                    if check_dead_pages(res) and is_valid(current_link) and get_unique_url(current_link):
+                        ics_subdomain(current_link)
     return new_pages
 
 def is_valid(url):
@@ -246,4 +248,53 @@ def check_low_high_content(res):
     if 300<=len(tokens)<=3000:
         return True
     return False
+def check_page_ics_subdomain(parsed):
+    checking_domain = 'ics.uci.edu'
+    current_domain = parsed.hostname
+    if checking_domain in current_domain and current_domain!=checking_domain:
+        return True
+    return False
+        
+        
+def ics_subdomain(current_link):
+    domain = 'ics.uci.edu'
+    try:
+        parsed = urlparse(current_link)
+    except TypeError:
+        print ("TypeError for ", parsed)
+        raise
+    else:
+        file_object_unique_urls = open('unique_url.txt',"r")
+        unique_urls  = file_object_unique_urls.read().strip(" ").split("\n")
+        if current_link not in unique_urls:
+            ics_subdomain_object = open("ics_subdomain.txt","w+")
+            frequencies = open("ics_subdomain_frequencies.txt","w+")
+            ics_subdomain_object.seek(0)
+            frequencies.seek(0)
+            subdomain_list = ics_subdomain_object.read().strip(" ").split("\n")
+            frequencies_list = frequencies.read().strip(" ").split("\n")
+            frequencies_list = [int(f) for f in frequencies_list]
+            if subdomain_list!=['']:
+                subdomain_freq_dict = dict(zip(subdomain_list,frequencies_list))
+                if check_page_ics_subdomain(parsed):
+                    if parsed.hostname in subdomain_freq_dict:
+                        subdomain_freq_dict[parsed.hostname] += 1
+                    else:
+                        subdomain_freq_dict[parsed.hostname] = 1
+                    sorted_dict = dict(sorted(subdomain_freq_dict.items(), key=lambda item: item[0]))
+                    count = 0
+                    for key,value in sorted_dict.items():
+                        if count!=0:
+                            ics_subdomain_object.write("\n"+key)
+                            frequencies.write("\n"+str(value))
+                        else:
+                            ics_subdomain_object.write(key)
+                            frequencies.write(str(value))
+            else:
+                if check_page_ics_subdomain(parsed):
+                    ics_subdomain_object.write(key)
+                    frequencies.write(str(1))
+            ics_subdomain_object.close()
+            frequencies.close()
+        file_object_unique_urls.close()
 
